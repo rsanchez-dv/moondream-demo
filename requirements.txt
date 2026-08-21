@@ -1,0 +1,4 @@
+moondream
+opencv-python
+Pillow
+python-dotenv
