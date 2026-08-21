@@ -12,6 +12,10 @@ load_dotenv()
 # ── Moondream ──────────────────────────────────────────────────────────────────
 MOONDREAM_API_KEY: str = os.getenv("MOONDREAM_API_KEY", "")
 
+# ── Ollama ─────────────────────────────────────────────────────────────────────
+OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "moondream")
+
 # ── Video source ───────────────────────────────────────────────────────────────
 # 0 = default webcam index; pass an RTSP URL string for IP cameras
 DEFAULT_SOURCE: str | int = 0

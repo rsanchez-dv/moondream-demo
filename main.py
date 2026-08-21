@@ -2,17 +2,20 @@
 main.py — Moondream webcam / IP-camera object detection demo.
 
 Usage examples:
+  # Ollama (local, no API key) — default when --ollama flag is used
+  python main.py --ollama
+
   # Cloud API, built-in webcam, detect "person"
   python main.py --api-key YOUR_KEY
 
   # Cloud API, Tapo C100 RTSP, detect "cat"
   python main.py --api-key YOUR_KEY --source rtsp://user:pass@192.168.1.100:554/stream2 --object cat
 
-  # Local inference, built-in webcam
+  # Local inference via Moondream SDK
   python main.py --local
 
   # Override frame-skip (higher = faster UI, staler detections)
-  python main.py --api-key YOUR_KEY --frame-skip 10
+  python main.py --ollama --frame-skip 10
 
 Keyboard shortcuts while running:
   Q  — quit
@@ -53,6 +56,24 @@ def parse_args() -> argparse.Namespace:
         "--local",
         action="store_true",
         help="Use local inference via md.photon() instead of the cloud API.",
+    )
+    backend.add_argument(
+        "--ollama",
+        action="store_true",
+        help=(
+            "Use a local Ollama server running the moondream model. "
+            "Requires: ollama serve + ollama pull moondream"
+        ),
+    )
+    parser.add_argument(
+        "--ollama-model",
+        default=config.OLLAMA_MODEL,
+        help="Ollama model name to use (default: moondream).",
+    )
+    parser.add_argument(
+        "--ollama-host",
+        default=config.OLLAMA_HOST,
+        help="Ollama server URL (default: http://localhost:11434).",
     )
 
     # Video source
@@ -106,15 +127,25 @@ def open_stream(source: str | int) -> WebcamStream | TapoStream:
 
 def run(args: argparse.Namespace) -> None:
     # ── Init model ──
-    if args.local:
+    if args.ollama:
+        try:
+            detector = Detector(
+                backend="ollama",
+                ollama_host=args.ollama_host,
+                ollama_model=args.ollama_model,
+            )
+        except RuntimeError as e:
+            print(f"[ERROR] {e}", file=sys.stderr)
+            sys.exit(1)
+    elif args.local:
         detector = Detector(backend="local")
     else:
         if not args.api_key:
             print(
-                "[ERROR] No API key provided.\n"
-                "  • Pass --api-key YOUR_KEY, or\n"
-                "  • Set MOONDREAM_API_KEY in a .env file, or\n"
-                "  • Use --local for on-device inference.",
+                "[ERROR] No backend specified.\n"
+                "  • Use --ollama for local Ollama inference (recommended), or\n"
+                "  • Pass --api-key YOUR_KEY for the cloud API, or\n"
+                "  • Use --local for on-device Moondream SDK inference.",
                 file=sys.stderr,
             )
             sys.exit(1)
